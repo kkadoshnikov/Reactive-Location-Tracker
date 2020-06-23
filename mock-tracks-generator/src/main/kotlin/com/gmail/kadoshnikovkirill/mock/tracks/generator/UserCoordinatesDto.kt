@@ -1,14 +1,13 @@
-package com.gmail.kadoshnikovkirill.mock.tracks.generator;
+package com.gmail.kadoshnikovkirill.mock.tracks.generator
 
-import lombok.Data;
+import java.time.LocalDateTime
 
-import java.time.LocalDateTime;
-
-@Data
-public class UserCoordinatesDto {
-
-    private final Long userId;
-    private final Float lat;
-    private final Float lon;
-    private final LocalDateTime timestamp;
+data class UserCoordinatesDto(
+    val userId: Long,
+    val lat: Float,
+    val lon: Float,
+    val timestamp: LocalDateTime
+) {
+    constructor(userId: Long, timestamp: LocalDateTime, coordinates: Pair<Number, Number>)
+            : this(userId, coordinates.first.toFloat(), coordinates.second.toFloat(), timestamp)
 }

@@ -1,16 +1,13 @@
-package com.gmail.kadoshnikovkirill.mock.tracks.generator;
+package com.gmail.kadoshnikovkirill.mock.tracks.generator
 
-import org.springframework.boot.SpringApplication;
-import org.springframework.boot.autoconfigure.SpringBootApplication;
-import org.springframework.scheduling.annotation.EnableScheduling;
+import org.springframework.boot.SpringApplication
+import org.springframework.boot.autoconfigure.SpringBootApplication
+import org.springframework.scheduling.annotation.EnableScheduling
 
 @SpringBootApplication
 @EnableScheduling
-public class Application {
+class Application
 
-    public static void main(String[] args) {
-        SpringApplication.run(Application.class, args);
-    }
-
+fun main(args: Array<String>) {
+    SpringApplication.run(Application::class.java, *args)
 }
-

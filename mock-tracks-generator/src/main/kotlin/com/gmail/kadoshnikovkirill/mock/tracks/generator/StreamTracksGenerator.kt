@@ -1,104 +1,84 @@
-package com.gmail.kadoshnikovkirill.mock.tracks.generator;
+package com.gmail.kadoshnikovkirill.mock.tracks.generator
 
-import org.springframework.beans.factory.annotation.Value;
-import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
-import org.springframework.http.MediaType;
-import org.springframework.scheduling.annotation.Scheduled;
-import org.springframework.stereotype.Service;
-import org.springframework.web.reactive.function.BodyInserters;
-import org.springframework.web.reactive.function.client.ClientResponse;
-import org.springframework.web.reactive.function.client.WebClient;
-import reactor.core.publisher.Flux;
-import reactor.util.function.Tuple2;
-import reactor.util.function.Tuples;
-
-import javax.annotation.PostConstruct;
-import java.time.Duration;
-import java.time.LocalDateTime;
-import java.util.Map;
-import java.util.function.Function;
-import java.util.stream.Collectors;
-import java.util.stream.LongStream;
+import org.springframework.beans.factory.annotation.Value
+import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty
+import org.springframework.http.MediaType
+import org.springframework.scheduling.annotation.Scheduled
+import org.springframework.stereotype.Service
+import org.springframework.web.reactive.function.BodyInserters
+import org.springframework.web.reactive.function.BodyInserters.fromPublisher
+import org.springframework.web.reactive.function.client.ClientResponse
+import org.springframework.web.reactive.function.client.WebClient
+import reactor.core.publisher.Flux
+import reactor.core.publisher.SynchronousSink
+import java.time.Duration
+import java.time.LocalDateTime.now
+import kotlin.random.Random.Default.nextDouble
 
 @Service
 @ConditionalOnProperty("stream.userCount")
-public class StreamTracksGenerator {
+class StreamTracksGenerator(@Value("\${stream.userCount}") private val userCount: Long) {
+    private val webClient: WebClient = WebClient.create("http://localhost:8080/tracks")
+    private val minLat = 54.900820
+    private val maxLat = 55.0005
+    private val minLon = 73.283246
+    private val maxLon = 73.490083
+    private val maxStep = 0.00002
 
-    private final WebClient webClient;
-    private final double minLat = 54.900820;
-    private final double maxLat = 55.0005;
-    private final double minLon = 73.283246;
-    private final double maxLon = 73.490083;
-    private final double maxStep = 0.00002;
-    @Value("${stream.userCount}")
-    private int userCount;
-    private Map<Long, Tuple2<Double, Double>> userCoordinates;
+    private lateinit var userCoordinates: MutableMap<Long, Pair<Double, Double>>
 
-    public StreamTracksGenerator() {
-
-        this.webClient = WebClient
-                .builder()
-                .baseUrl("http://localhost:8080/tracks")
-                .build();
+    init {
+        userCoordinates = (0 until userCount)
+                .associateWith { nextDouble(minLat, maxLat) to nextDouble(minLon, maxLon) }
+                .toMutableMap()
+        trackInitialState()
     }
 
-    @PostConstruct
-    public void init() {
-        userCoordinates = LongStream.range(0, userCount).boxed().collect(Collectors.toMap(
-            Function.identity(),
-            i -> Tuples.of(randomInRange(minLat, maxLat), randomInRange(minLon, maxLon))));
-        LocalDateTime now = LocalDateTime.now();
-
-        trackInitialState(now);
+    private fun trackInitialState() {
+        val now = now()
+        userCoordinates
+                .map { (userId, coordinates) -> UserCoordinatesDto(
+                        userId = userId,
+                        timestamp = now,
+                        coordinates = coordinates) }
+                .forEach {
+                    webClient.post()
+                            .contentType(MediaType.APPLICATION_JSON)
+                            .accept(MediaType.APPLICATION_JSON)
+                            .body(BodyInserters.fromValue(it))
+                            .exchange()
+                            .map(ClientResponse::statusCode)
+                            .log()
+                            .subscribe()
+        }
     }
 
-    private void trackInitialState(LocalDateTime now) {
-        userCoordinates.forEach((i, coordinates) -> webClient.post()
-                .contentType(MediaType.APPLICATION_JSON)
-                .accept(MediaType.APPLICATION_JSON)
-                .body(BodyInserters.fromObject(toUserCoordinates(now, i, coordinates)))
-                .exchange()
-                .map(ClientResponse::statusCode)
-                .log()
-                .subscribe());
-    }
-
-    /**
-     *
-     * fixedRate = Long.MAX_VALUE isn't a good solution, but it's OK for mock.
-     */
+    // fixedRate = Long.MAX_VALUE isn't a good solution, but it's OK for mock.
     @Scheduled(initialDelay = 5000, fixedRate = Long.MAX_VALUE)
-    public void startTracksStream() {
-        userCoordinates.replaceAll((i, coordinates) -> makeStep(coordinates));
-        userCoordinates.keySet().forEach(userId -> webClient.post()
-                .uri("/stream")
-                .contentType(MediaType.APPLICATION_STREAM_JSON)
-                .accept(MediaType.APPLICATION_STREAM_JSON)
-                .body(BodyInserters.fromPublisher(generateCoordinatesFlux(userId), UserCoordinatesDto.class))
-                .exchange()
-                .map(ClientResponse::statusCode)
-                .log()
-                .subscribe());
+    fun startTracksStream() {
+        userCoordinates.replaceAll { _, coordinates -> coordinates.nextCoordinates() }
+        userCoordinates.keys.forEach { userId ->
+            webClient.post()
+                    .uri("/stream")
+                    .contentType(MediaType.APPLICATION_STREAM_JSON)
+                    .accept(MediaType.APPLICATION_STREAM_JSON)
+                    .body(fromPublisher(generateCoordinatesFlux(userId), UserCoordinatesDto::class.java))
+                    .exchange()
+                    .map(ClientResponse::statusCode)
+                    .log()
+                    .subscribe()
+        }
     }
 
-    private Flux<UserCoordinatesDto> generateCoordinatesFlux(Long userId) {
-        return Flux.<UserCoordinatesDto>generate(sync -> {
-            Tuple2<Double, Double> newCoordinates = userCoordinates
-                    .computeIfPresent(userId, (i, coordinates) -> makeStep(coordinates));
-            sync.next(toUserCoordinates(LocalDateTime.now(), userId, newCoordinates));
-        }).delayElements(Duration.ofMillis(100));
+    private fun generateCoordinatesFlux(userId: Long): Flux<UserCoordinatesDto> {
+        return Flux.generate { sync: SynchronousSink<UserCoordinatesDto> ->
+            val newCoordinates = userCoordinates
+                    .computeIfPresent(userId) { _, coordinates -> coordinates.nextCoordinates() }
+            newCoordinates?.let { sync.next(UserCoordinatesDto(userId, now(), it)) }
+        }.delayElements(Duration.ofMillis(100))
     }
 
-    private Double randomInRange(double min, double max) {
-        return min + Math.random() * (max - min);
-    }
+    private fun Pair<Double, Double>.nextCoordinates() = first.nextCoordinate() to second.nextCoordinate()
 
-    private Tuple2<Double, Double> makeStep(Tuple2<Double, Double> currCoordinated) {
-        return currCoordinated.mapT1(x -> x + (Math.random() - 0.5) * maxStep)
-                .mapT2(x -> x + (Math.random() - 0.5) * maxStep);
-    }
-
-    private UserCoordinatesDto toUserCoordinates(LocalDateTime now, Long i, Tuple2<Double, Double> coordinates) {
-        return new UserCoordinatesDto(i, coordinates.getT1().floatValue(), coordinates.getT2().floatValue(), now);
-    }
+    private fun Double.nextCoordinate() = this + (Math.random() - 0.5) * maxStep
 }
