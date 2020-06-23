@@ -1,52 +1,49 @@
-package com.gmail.kadoshnikovkirill.locationtracker.service;
+package com.gmail.kadoshnikovkirill.locationtracker.service
 
-import com.gmail.kadoshnikovkirill.locationtracker.domain.Track;
-import com.gmail.kadoshnikovkirill.locationtracker.repository.TracksRepository;
-import com.gmail.kadoshnikovkirill.locationtracker.dto.LocationDto;
-import lombok.RequiredArgsConstructor;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-import org.springframework.beans.factory.annotation.Value;
-import org.springframework.stereotype.Service;
-import reactor.core.publisher.Flux;
-import reactor.core.publisher.Mono;
-
-import java.time.Duration;
+import com.gmail.kadoshnikovkirill.locationtracker.domain.Track
+import com.gmail.kadoshnikovkirill.locationtracker.dto.LocationDto
+import com.gmail.kadoshnikovkirill.locationtracker.repository.TracksRepository
+import org.slf4j.LoggerFactory
+import org.springframework.beans.factory.annotation.Value
+import org.springframework.stereotype.Service
+import reactor.core.publisher.Flux
+import reactor.core.publisher.Mono
+import java.time.Duration
 
 @Service
-@RequiredArgsConstructor
-public class TracksService {
+class TracksService(
+        private val repository: TracksRepository,
+        private val locationService: LocationService,
+        @Value("\${cassandraTimeout}")
+        private val cassandraTimeout: Int
+) {
+    private val empty = LocationDto()
 
-    private static final Logger LOG = LoggerFactory.getLogger(TracksService.class);
-
-    private final TracksRepository repository;
-    private final LocationService locationService;
-    private final LocationDto empty = new LocationDto();
-    @Value("${cassandraTimeout}")
-    private Integer cassandraTimeout;
-
-    public Mono<Track> track(Track coordinates) {
+    fun track(coordinates: Track): Mono<Track> {
         return locationService
-                .getLocationByCoordinates(coordinates.getLat(), coordinates.getLon())
-                .doOnError(e -> LOG.warn("Getting location by coordinates is failed. Coordinates: {}.", coordinates, e))
+                .getLocationByCoordinates(coordinates.lat, coordinates.lon)
+                .doOnError { e: Throwable? -> LOG.warn("Getting location by coordinates is failed. Coordinates: {}.", coordinates, e) }
                 .onErrorReturn(empty)
-                .flatMap(locationDto -> {
-                    Track track = coordinates.toBuilder()
-                            .countryCode(locationDto.getCountryCode())
-                            .postalCode(locationDto.getPostalCode())
-                            .country(locationDto.getCountry())
-                            .region(locationDto.getRegion())
-                            .city(locationDto.getCity())
-                            .street(locationDto.getStreet())
-                            .house(locationDto.getHouse())
-                            .build();
-                    return repository.save(track)
-                            .timeout(Duration.ofMillis(cassandraTimeout))
-                            .doOnError(e -> LOG.warn("Saving track in cassandra is failed. Track: {}.", track, e));
-                });
+                .flatMap { dto: LocationDto ->
+                    val track = coordinates.copy(
+                            countryCode = dto.countryCode,
+                            postalCode = dto.postalCode,
+                            country = dto.country,
+                            region = dto.region,
+                            city = dto.city,
+                            street = dto.street,
+                            house = dto.house)
+                    repository.save(track)
+                            .timeout(Duration.ofMillis(cassandraTimeout.toLong()))
+                            .doOnError { e: Throwable? -> LOG.warn("Saving track in cassandra is failed. Track: {}.", track, e) }
+                }
     }
 
-    public Flux<Track> findByUserIdAndPeriod(Long userId, Integer periodInHours) {
-        return repository.findByKeyUserIdAndPeriod(userId, periodInHours);
+    fun findByUserIdAndPeriod(userId: Long, periodInHours: Int): Flux<Track> {
+        return repository.findByKeyUserIdAndPeriod(userId, periodInHours)
+    }
+
+    companion object {
+        private val LOG = LoggerFactory.getLogger(TracksService::class.java)
     }
 }

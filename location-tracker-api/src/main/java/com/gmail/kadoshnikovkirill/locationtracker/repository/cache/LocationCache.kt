@@ -1,11 +1,9 @@
-package com.gmail.kadoshnikovkirill.locationtracker.repository.cache;
+package com.gmail.kadoshnikovkirill.locationtracker.repository.cache
 
-import com.gmail.kadoshnikovkirill.locationtracker.dto.LocationDto;
-import reactor.core.publisher.Mono;
+import com.gmail.kadoshnikovkirill.locationtracker.dto.LocationDto
+import reactor.core.publisher.Mono
 
-public interface LocationCache {
-
-    Mono<LocationDto> get(float lat, float lon);
-
-    void put(float lat, float lon, LocationDto dto);
+interface LocationCache {
+    operator fun get(lat: Float, lon: Float): Mono<LocationDto>
+    fun put(lat: Float, lon: Float, dto: LocationDto)
 }

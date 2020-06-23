@@ -1,39 +1,34 @@
-package com.gmail.kadoshnikovkirill.locationtracker.repository.cache;
+package com.gmail.kadoshnikovkirill.locationtracker.repository.cache
 
-import com.gmail.kadoshnikovkirill.locationtracker.dto.LocationDto;
-import org.springframework.data.redis.connection.ReactiveRedisConnectionFactory;
-import org.springframework.data.redis.core.ReactiveRedisTemplate;
-import org.springframework.data.redis.serializer.RedisSerializationContext;
-import org.springframework.data.redis.serializer.StringRedisSerializer;
-import org.springframework.stereotype.Component;
-import reactor.core.publisher.Mono;
+import com.gmail.kadoshnikovkirill.locationtracker.dto.LocationDto
+import org.springframework.data.redis.connection.ReactiveRedisConnectionFactory
+import org.springframework.data.redis.core.ReactiveRedisTemplate
+import org.springframework.data.redis.serializer.RedisSerializationContext
+import org.springframework.data.redis.serializer.StringRedisSerializer
+import org.springframework.stereotype.Component
+import reactor.core.publisher.Mono
 
 @Component
-public class RedisLocationCache extends ReactiveRedisTemplate<String, LocationDto> implements LocationCache {
-
-    public RedisLocationCache(ReactiveRedisConnectionFactory connectionFactory) {
-        super(connectionFactory, context());
+class RedisLocationCache(connectionFactory: ReactiveRedisConnectionFactory) : ReactiveRedisTemplate<String, LocationDto>(connectionFactory, context()), LocationCache {
+    override fun get(lat: Float, lon: Float): Mono<LocationDto> {
+        return this.opsForHash<String, LocationDto>()["location", hashKey(lat, lon)]
     }
 
-    private static RedisSerializationContext<String, LocationDto> context() {
-        return RedisSerializationContext
-                .<String, LocationDto>newSerializationContext(new StringRedisSerializer())
-                .hashKey(new StringRedisSerializer())
-                .hashValue(new KryoRedisSerializer<LocationDto>())
-                .build();
+    override fun put(lat: Float, lon: Float, dto: LocationDto) {
+        this.opsForHash<Any, Any>().put("location", hashKey(lat, lon), dto).subscribe()
     }
 
-    @Override
-    public Mono<LocationDto> get(float lat, float lon) {
-        return this.<String, LocationDto>opsForHash().get("location", hashKey(lat, lon));
+    private fun hashKey(lat: Float, lon: Float): String {
+        return "$lat:$lon"
     }
 
-    @Override
-    public void put(float lat, float lon, LocationDto dto) {
-        this.opsForHash().put("location", hashKey(lat, lon), dto).subscribe();
-    }
-
-    private String hashKey(float lat, float lon) {
-        return lat + ":" + lon;
+    companion object {
+        private fun context(): RedisSerializationContext<String, LocationDto> {
+            return RedisSerializationContext
+                    .newSerializationContext<String, LocationDto>(StringRedisSerializer())
+                    .hashKey(StringRedisSerializer())
+                    .hashValue(KryoRedisSerializer<LocationDto>())
+                    .build()
+        }
     }
 }

@@ -94,6 +94,9 @@
                         <plugin>spring</plugin>
                         <plugin>jpa</plugin>
                     </compilerPlugins>
+                    <args>
+                        <arg>-Xjvm-default=enable</arg>
+                    </args>
                     <jvmTarget>11</jvmTarget>
                 </configuration>
                 <dependencies>

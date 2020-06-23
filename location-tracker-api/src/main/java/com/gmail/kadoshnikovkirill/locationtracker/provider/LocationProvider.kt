@@ -1,9 +1,8 @@
-package com.gmail.kadoshnikovkirill.locationtracker.provider;
+package com.gmail.kadoshnikovkirill.locationtracker.provider
 
-import com.gmail.kadoshnikovkirill.locationtracker.dto.LocationDto;
-import reactor.core.publisher.Mono;
+import com.gmail.kadoshnikovkirill.locationtracker.dto.LocationDto
+import reactor.core.publisher.Mono
 
-public interface LocationProvider {
-
-    Mono<LocationDto> getByCoordinates(float lat, float lon);
+interface LocationProvider {
+    fun getByCoordinates(lat: Float, lon: Float): Mono<LocationDto>
 }

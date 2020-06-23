@@ -1,41 +1,35 @@
-package com.gmail.kadoshnikovkirill.locationtracker.repository.cache;
+package com.gmail.kadoshnikovkirill.locationtracker.repository.cache
 
-import com.esotericsoftware.kryo.Kryo;
-import com.esotericsoftware.kryo.io.Input;
-import com.esotericsoftware.kryo.io.Output;
-import com.esotericsoftware.kryo.pool.KryoPool;
-import org.springframework.data.redis.serializer.RedisSerializer;
-import org.springframework.data.redis.serializer.SerializationException;
+import com.esotericsoftware.kryo.Kryo
+import com.esotericsoftware.kryo.io.Input
+import com.esotericsoftware.kryo.io.Output
+import com.esotericsoftware.kryo.pool.KryoFactory
+import com.esotericsoftware.kryo.pool.KryoPool
+import org.springframework.data.redis.serializer.RedisSerializer
+import java.io.ByteArrayOutputStream
 
-import java.io.ByteArrayOutputStream;
+class KryoRedisSerializer<T> : RedisSerializer<T?> {
+    private val kryoPool = KryoPool.Builder(KryoFactory { Kryo() }).softReferences().build()
 
-public class KryoRedisSerializer<T> implements RedisSerializer<T> {
-
-    private KryoPool kryoPool = new KryoPool.Builder(Kryo::new).softReferences().build();
-
-    @Override
-    public byte[] serialize(final T o) throws SerializationException {
-        return kryoPool.run(kryo -> {
-            ByteArrayOutputStream stream = new ByteArrayOutputStream();
-            Output output = new Output(stream);
-            kryo.writeClassAndObject(output, o);
-            output.close();
-            return stream.toByteArray();
-        });
+    override fun serialize(o: T?): ByteArray {
+        return kryoPool.run { kryo: Kryo ->
+            val stream = ByteArrayOutputStream()
+            val output = Output(stream)
+            kryo.writeClassAndObject(output, o)
+            output.close()
+            stream.toByteArray()
+        }
     }
 
-    @Override
-    public T deserialize(final byte[] bytes) throws SerializationException {
+    override fun deserialize(bytes: ByteArray): T? {
         // both not found or "null" value will return "null"
-        if (bytes == null || bytes.length == 0) {
-            return null;
+        return if (bytes == null || bytes.size == 0) {
+            null
+        } else kryoPool.run { kryo: Kryo ->
+            val input = Input(bytes)
+            val o = kryo.readClassAndObject(input) as T
+            input.close()
+            o
         }
-        return kryoPool.run(kryo -> {
-            Input input = new Input(bytes);
-            @SuppressWarnings("unchecked")
-            T o = (T) kryo.readClassAndObject(input);
-            input.close();
-            return o;
-        });
     }
 }

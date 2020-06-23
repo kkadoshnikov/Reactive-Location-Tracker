@@ -1,13 +1,11 @@
-package com.gmail.kadoshnikovkirill.locationtracker;
+package com.gmail.kadoshnikovkirill.locationtracker
 
-import org.junit.jupiter.api.Test;
-import org.springframework.boot.test.context.SpringBootTest;
+import org.junit.jupiter.api.Test
+import org.springframework.boot.test.context.SpringBootTest
 
 @SpringBootTest
 class LocationDtoTrackerApplicationTests {
-
-	@Test
-	void contextLoads() {
-	}
-
+    @Test
+    fun contextLoads() {
+    }
 }

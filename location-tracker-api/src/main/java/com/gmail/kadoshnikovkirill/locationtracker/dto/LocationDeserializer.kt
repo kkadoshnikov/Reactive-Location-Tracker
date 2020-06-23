@@ -1,70 +1,41 @@
-package com.gmail.kadoshnikovkirill.locationtracker.dto;
+package com.gmail.kadoshnikovkirill.locationtracker.dto
 
-import com.fasterxml.jackson.core.JsonParser;
-import com.fasterxml.jackson.databind.DeserializationContext;
-import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.deser.std.StdDeserializer;
-import io.micrometer.core.instrument.Metrics;
-import io.micrometer.core.instrument.Timer;
-import lombok.SneakyThrows;
+import com.fasterxml.jackson.core.JsonParser
+import com.fasterxml.jackson.databind.DeserializationContext
+import com.fasterxml.jackson.databind.JsonNode
+import com.fasterxml.jackson.databind.deser.std.StdDeserializer
+import io.micrometer.core.instrument.Metrics
+import io.micrometer.core.instrument.Timer
 
-public class LocationDeserializer extends StdDeserializer<LocationDto> {
+class LocationDeserializer @JvmOverloads constructor(vc: Class<*>? = LocationDto::class.java) : StdDeserializer<LocationDto>(vc) {
+    private val timer = Metrics.timer("location.deserialization")
 
-    private Timer timer = Metrics.timer("location.deserialization");
-
-    public LocationDeserializer() {
-        this(LocationDto.class);
-    }
-
-    public LocationDeserializer(Class<?> vc) {
-        super(vc);
-    }
-
-    @Override
-    @SneakyThrows
-    public LocationDto deserialize(JsonParser jsonParser, DeserializationContext deserializationContext) {
-        Timer.Sample sample = Timer.start();
-
-        JsonNode jsonNode = jsonParser.getCodec().readTree(jsonParser);
-        JsonNode address = jsonNode.get("response")
-                .get("GeoObjectCollection")
-                .get("featureMember")
-                .elements().next()
-                .get("GeoObject")
-                .get("metaDataProperty")
-                .get("GeocoderMetaData")
-                .get("Address");
-        LocationDto locationDto = new LocationDto();
+    override fun deserialize(jsonParser: JsonParser, deserializationContext: DeserializationContext): LocationDto {
+        val sample = Timer.start()
+        val jsonNode = jsonParser.codec.readTree<JsonNode>(jsonParser)
+        val address = jsonNode["response"]["GeoObjectCollection"]["featureMember"]
+                .elements().next()["GeoObject"]["metaDataProperty"]["GeocoderMetaData"]["Address"]
+        val locationDto = LocationDto()
         if (address.has("postal_code")) {
-            locationDto.setPostalCode(address.get("postal_code").asInt());
+            locationDto.postalCode = address["postal_code"].asInt()
         }
         if (address.has("country_code")) {
-            locationDto.setCountryCode(address.get("country_code").asText());
+            locationDto.countryCode = address["country_code"].asText()
         }
-        address.get("Components").iterator()
-                .forEachRemaining(component -> {
-                    String kind = component.get("kind").asText();
-                    switch (kind) {
-                        case "country":
-                            locationDto.setCountry(component.get("name").asText());
-                            break;
-                        case "province":
-                            locationDto.setRegion(component.get("name").asText());
-                            break;
-                        case "locality":
-                            locationDto.setCity(component.get("name").asText());
-                            break;
-                        case "street":
-                            locationDto.setStreet(component.get("name").asText());
-                            break;
-                        case "house":
-                            locationDto.setHouse(component.get("name").asText());
-                        default:
-                            break;
+        address["Components"].iterator()
+                .forEachRemaining { component: JsonNode ->
+                    val kind = component["kind"].asText()
+                    when (kind) {
+                        "country" -> locationDto.country = component["name"].asText()
+                        "province" -> locationDto.region = component["name"].asText()
+                        "locality" -> locationDto.city = component["name"].asText()
+                        "street" -> locationDto.street = component["name"].asText()
+                        "house" -> locationDto.house = component["name"].asText()
+                        else -> {
+                        }
                     }
-                });
-
-        sample.stop(timer);
-        return locationDto;
+                }
+        sample.stop(timer)
+        return locationDto
     }
 }

@@ -1,16 +1,16 @@
-package com.gmail.kadoshnikovkirill.locationtracker.configuration;
+package com.gmail.kadoshnikovkirill.locationtracker.configuration
 
-import io.micrometer.core.aop.TimedAspect;
-import io.micrometer.core.instrument.MeterRegistry;
-import org.springframework.context.annotation.Bean;
-import org.springframework.context.annotation.Configuration;
-import org.springframework.context.annotation.EnableAspectJAutoProxy;
+import io.micrometer.core.aop.TimedAspect
+import io.micrometer.core.instrument.MeterRegistry
+import org.springframework.context.annotation.Bean
+import org.springframework.context.annotation.Configuration
+import org.springframework.context.annotation.EnableAspectJAutoProxy
 
 @Configuration
 @EnableAspectJAutoProxy
-public class AutoTimingConfiguration {
+class AutoTimingConfiguration {
     @Bean
-    public TimedAspect timedAspect(MeterRegistry registry) {
-        return new TimedAspect(registry);
+    fun timedAspect(registry: MeterRegistry): TimedAspect {
+        return TimedAspect(registry)
     }
 }

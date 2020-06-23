@@ -1,18 +1,13 @@
-package com.gmail.kadoshnikovkirill.locationtracker.dto;
+package com.gmail.kadoshnikovkirill.locationtracker.dto
 
-import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
-import lombok.Data;
+import java.io.Serializable
 
-import java.io.Serializable;
-
-@Data
-@JsonDeserialize(using = LocationDeserializer.class)
-public class LocationDto implements Serializable {
-    private String countryCode;
-    private Integer postalCode;
-    private String country;
-    private String region;
-    private String city;
-    private String street;
-    private String house;
-}
+data class LocationDto(
+    var countryCode: String? = null,
+    var postalCode: Int? = null,
+    var country: String? = null,
+    var region: String? = null,
+    var city: String? = null,
+    var street: String? = null,
+    var house: String? = null
+): Serializable
