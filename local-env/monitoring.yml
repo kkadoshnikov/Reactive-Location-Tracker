@@ -1,0 +1,13 @@
+version: '3.7'
+services:
+  prometheus:
+    build: prometheus/
+    network_mode: "host"
+    ports:
+      - 9990:9990
+
+  grafana:
+    build: grafana/
+    network_mode: "host"
+    ports:
+      - 3000:3000

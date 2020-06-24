@@ -1,0 +1,122 @@
+global:
+  scrape_interval: 10s
+
+scrape_configs:
+  - job_name: 'prometheus_master'
+    static_configs:
+      - targets: ['knd-esr-monitoring-dev.vms.torcloud.digital.gov.ru:9100']
+  - job_name: 'ansible_host'
+    static_configs:
+      - targets: ['10.20.22.167:9100']
+  - job_name: 'esr_gitlab'
+    static_configs:
+      - targets: ['knd-esr-gitlab-core-1-dev.vms.torcloud.digital.gov.ru:9100', 'knd-esr-gitlab-runner-1-dev.vms.torcloud.digital.gov.ru:9100', 'knd-esr-gitlab-runner-dev-2.vms.torcloud.digital.gov.ru:9100', 'knd-esr-gitlab-runner-dev-3.vms.torcloud.digital.gov.ru:9100', 'knd-esr-gitlab-runner-dev-4.vms.torcloud.digital.gov.ru:9100', 'knd-esr-gitlab-runner-dev-5.vms.torcloud.digital.gov.ru:9100', 'knd-esr-gitlab-runner-dev-6.vms.torcloud.digital.gov.ru:9100', 'knd-esr-gitlab-runner-dev-7.vms.torcloud.digital.gov.ru:9100', 'knd-esr-gitlab-runner-dev-8.vms.torcloud.digital.gov.ru:9100', 'knd-esr-gitlab-runner-dev-9.vms.torcloud.digital.gov.ru:9100']
+  - job_name: 'esr_sonar'
+    static_configs:
+      - targets: ['knd-esr-sonarqube-1-dev.vms.torcloud.digital.gov.ru:9100']
+  - job_name: 'esr_nexus'
+    static_configs:
+      - targets: ['knd-esr-nexus-1-dev.vms.torcloud.digital.gov.ru:9100']
+  - job_name: 'esr_storage'
+    static_configs:
+      - targets: ['knd-esr-storage-1-dev.vms.torcloud.digital.gov.ru:9100', 'knd-esr-storage-2-dev.vms.torcloud.digital.gov.ru:9100']
+  - job_name: 'esr_databases'
+    static_configs:
+      - targets: ['knd-esr-databases-1-dev.vms.torcloud.digital.gov.ru:9100', 'knd-esr-databases-2-dev.vms.torcloud.digital.gov.ru:9100']
+  - job_name: 'esr_redis'
+    static_configs:
+      - targets: ['knd-esr-redis-1-dev.vms.torcloud.digital.gov.ru:9100', 'knd-esr-redis-2-dev.vms.torcloud.digital.gov.ru:9100', 'knd-esr-redis-3-dev.vms.torcloud.digital.gov.ru:9100']
+  - job_name: 'esr_lb'
+    static_configs:
+      - targets: ['sonar.vms.torcloud.digital.gov.ru:9100', 'gitlab.vms.torcloud.digital.gov.ru:9100']
+  - job_name: 'esr_freeipa'
+    static_configs:
+      - targets: ['knd-esr-okd-freeipa-nonprod.vms.torcloud.digital.gov.ru:9100']
+  - job_name: 'dev-spark-adapter'
+    metrics_path: '/actuator/prometheus'
+    static_configs:
+      - targets: ['10.20.22.166:9090']
+  - job_name: 'dev-eds-adapter'
+    metrics_path: '/actuator/prometheus'
+    static_configs:
+      - targets: ['10.20.22.166:9089']
+  - job_name: 'dev-egrkn-adapter'
+    metrics_path: '/actuator/prometheus'
+    static_configs:
+      - targets: ['10.20.22.166:9091']
+  - job_name: 'dev-eiszhs-adapter'
+    metrics_path: '/actuator/prometheus'
+    static_configs:
+      - targets: ['10.20.22.166:9092']
+  - job_name: 'dev-eisgs-adapter'
+    metrics_path: '/actuator/prometheus'
+    static_configs:
+      - targets: ['10.20.22.166:9093']
+  - job_name: 'dev-egrfns-adapter'
+    metrics_path: '/actuator/prometheus'
+    static_configs:
+      - targets: ['10.20.22.166:9094']
+  - job_name: 'dev-vetis-adapter'
+    metrics_path: '/actuator/prometheus'
+    static_configs:
+      - targets: ['10.20.22.166:9095']
+  - job_name: 'dev-uonvos-adapter'
+    metrics_path: '/actuator/prometheus'
+    static_configs:
+      - targets: ['10.20.22.166:9096']
+  - job_name: 'dev-sed-adapter'
+    metrics_path: '/actuator/prometheus'
+    static_configs:
+      - targets: ['10.20.22.166:9097']
+  - job_name: 'dev-hcs-adapter'
+    metrics_path: '/actuator/prometheus'
+    static_configs:
+      - targets: ['10.20.22.166:9098']
+  - job_name: 'dev-module-api-adapter'
+    metrics_path: '/actuator/prometheus'
+    static_configs:
+      - targets: ['10.20.22.166:9099']
+  - job_name: 'test-spark-adapter'
+    metrics_path: '/actuator/prometheus'
+    static_configs:
+      - targets: ['10.20.21.252:9090']
+  - job_name: 'test-eds-adapter'
+    metrics_path: '/actuator/prometheus'
+    static_configs:
+      - targets: ['10.20.21.252:9089']
+  - job_name: 'test-egrkn-adapter'
+    metrics_path: '/actuator/prometheus'
+    static_configs:
+      - targets: ['10.20.21.252:9091']
+  - job_name: 'test-eiszhs-adapter'
+    metrics_path: '/actuator/prometheus'
+    static_configs:
+      - targets: ['10.20.21.252:9092']
+  - job_name: 'test-eisgs-adapter'
+    metrics_path: '/actuator/prometheus'
+    static_configs:
+      - targets: ['10.20.21.252:9093']
+  - job_name: 'test-egrfns-adapter'
+    metrics_path: '/actuator/prometheus'
+    static_configs:
+      - targets: ['10.20.21.252:9094']
+  - job_name: 'test-vetis-adapter'
+    metrics_path: '/actuator/prometheus'
+    static_configs:
+      - targets: ['10.20.21.252:9095']
+  - job_name: 'test-uonvos-adapter'
+    metrics_path: '/actuator/prometheus'
+    static_configs:
+      - targets: ['10.20.21.252:9096']
+  - job_name: 'test-sed-adapter'
+    metrics_path: '/actuator/prometheus'
+    static_configs:
+      - targets: ['10.20.21.252:9097']
+  - job_name: 'test-hcs-adapter'
+    metrics_path: '/actuator/prometheus'
+    static_configs:
+      - targets: ['10.20.21.252:9098']
+  - job_name: 'test-module-api-adapter'
+    metrics_path: '/actuator/prometheus'
+    static_configs:
+      - targets: ['10.20.21.252:9099']

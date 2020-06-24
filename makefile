@@ -13,30 +13,17 @@ run:
 start:
 	docker start cassandra
 	docker start redis
-	docker start prometheus
-	docker start grafana
 	docker start cassandra_exporter
 
 stop:
 	docker stop cassandra || true
 	docker stop redis || true
-	docker stop prometheus || true
-	docker stop grafana || true
 	docker stop cassandra_exporter || true
 
 clean: stop
 	docker rm cassandra || true
 	docker rm redis || true
-	docker rm prometheus || true
-	docker rm grafana || true
 	docker rm cassandra_exporter || true
-
-migrate_grafana:
-	curl -H 'content-type: application/json' -X POST http://admin:admin@localhost:3000/api/datasources -d @grafana/prometheus.json
-	curl -H 'content-type: application/json' -X POST http://admin:admin@localhost:3000/api/dashboards/db -d @grafana/cassandra.json
-	curl -H 'content-type: application/json' -X POST http://admin:admin@localhost:3000/api/dashboards/db -d @grafana/java_micrometer.json
-	curl -H 'content-type: application/json' -X POST http://admin:admin@localhost:3000/api/dashboards/db -d @grafana/spring_boot_statistics.json
-	curl -H 'content-type: application/json' -X POST http://admin:admin@localhost:3000/api/dashboards/db -d @grafana/locations.json
 
 migrate_cassandra:
 	for attempt in 1 2 4 6 8 ; do \
