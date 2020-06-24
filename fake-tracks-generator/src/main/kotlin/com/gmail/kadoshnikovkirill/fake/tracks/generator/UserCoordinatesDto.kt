@@ -1,4 +1,4 @@
-package com.gmail.kadoshnikovkirill.mock.tracks.generator
+package com.gmail.kadoshnikovkirill.fake.tracks.generator
 
 import java.time.LocalDateTime
 
