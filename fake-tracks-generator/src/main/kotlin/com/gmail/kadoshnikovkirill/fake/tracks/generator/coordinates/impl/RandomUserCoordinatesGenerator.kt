@@ -1,7 +1,7 @@
-package com.gmail.kadoshnikovkirill.fake.tracks.generator.core.impl
+package com.gmail.kadoshnikovkirill.fake.tracks.generator.coordinates.impl
 
-import com.gmail.kadoshnikovkirill.fake.tracks.generator.UserCoordinatesDto
-import com.gmail.kadoshnikovkirill.fake.tracks.generator.core.UserCoordinatesGenerator
+import com.gmail.kadoshnikovkirill.fake.tracks.generator.model.UserCoordinatesDto
+import com.gmail.kadoshnikovkirill.fake.tracks.generator.coordinates.UserCoordinatesGenerator
 import java.time.LocalDateTime
 import kotlin.random.Random
 

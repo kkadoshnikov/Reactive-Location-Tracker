@@ -1,8 +1,8 @@
-package com.gmail.kadoshnikovkirill.fake.tracks.generator.core.impl
+package com.gmail.kadoshnikovkirill.fake.tracks.generator.coordinates.impl
 
-import com.gmail.kadoshnikovkirill.fake.tracks.generator.core.UserCoordinatesGenerator
-import com.gmail.kadoshnikovkirill.fake.tracks.generator.core.UserCoordinatesGeneratorFactory
-import com.gmail.kadoshnikovkirill.fake.tracks.generator.core.UserIdSequence
+import com.gmail.kadoshnikovkirill.fake.tracks.generator.coordinates.UserCoordinatesGenerator
+import com.gmail.kadoshnikovkirill.fake.tracks.generator.coordinates.UserCoordinatesGeneratorFactory
+import com.gmail.kadoshnikovkirill.fake.tracks.generator.coordinates.UserIdSequence
 import org.springframework.stereotype.Component
 import kotlin.random.Random.Default.nextDouble
 

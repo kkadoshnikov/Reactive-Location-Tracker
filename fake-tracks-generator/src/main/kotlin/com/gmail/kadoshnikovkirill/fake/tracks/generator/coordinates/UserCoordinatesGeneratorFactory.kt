@@ -1,4 +1,4 @@
-package com.gmail.kadoshnikovkirill.fake.tracks.generator.core
+package com.gmail.kadoshnikovkirill.fake.tracks.generator.coordinates
 
 interface UserCoordinatesGeneratorFactory {
     fun createSingle() : UserCoordinatesGenerator

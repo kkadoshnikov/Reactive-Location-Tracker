@@ -1,24 +1,21 @@
 package com.gmail.kadoshnikovkirill.fake.tracks.generator
 
-import com.gmail.kadoshnikovkirill.fake.tracks.generator.core.UserCoordinatesGeneratorFactory
+import com.gmail.kadoshnikovkirill.fake.tracks.generator.clients.TrackerClient
+import com.gmail.kadoshnikovkirill.fake.tracks.generator.coordinates.UserCoordinatesGeneratorFactory
 import org.springframework.beans.factory.annotation.Value
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty
-import org.springframework.http.MediaType
 import org.springframework.scheduling.annotation.Scheduled
 import org.springframework.stereotype.Service
-import org.springframework.web.reactive.function.BodyInserters
-import org.springframework.web.reactive.function.client.ClientResponse
-import org.springframework.web.reactive.function.client.WebClient
 
 @Service
 @ConditionalOnProperty("serial.userCount")
 class SerialTracksGenerator(
         @Value("\${serial.userCount}")
         private val userCount: Int,
-        userCoordinatesGeneratorFactory: UserCoordinatesGeneratorFactory
+        userCoordinatesGeneratorFactory: UserCoordinatesGeneratorFactory,
+        private val trackerClient: TrackerClient
 ) {
 
-    private val webClient: WebClient = WebClient.create("localhost:8080/tracks")
     private val fakeUsers = userCoordinatesGeneratorFactory.createList(userCount)
 
     init {
@@ -26,22 +23,18 @@ class SerialTracksGenerator(
     }
 
     // We need initial delay because first time takes more time (due to empty cache)
-    @Scheduled(initialDelay = 5000, fixedRate = 250)
+    @Scheduled(initialDelay = INIT_CACHE_DELAY, fixedRate = DELAY)
     fun generateTracks() {
         sendTracks()
     }
 
     private fun sendTracks() {
         fakeUsers.map { it.getCoordinates() }
-                .forEach {
-                    webClient.post()
-                            .contentType(MediaType.APPLICATION_JSON)
-                            .accept(MediaType.APPLICATION_JSON)
-                            .body(BodyInserters.fromValue(it))
-                            .exchange()
-                            .map(ClientResponse::statusCode)
-                            .log()
-                            .subscribe()
-        }
+                .forEach(trackerClient::sendTrack)
+    }
+
+    companion object {
+        private const val INIT_CACHE_DELAY = 5000L
+        private const val DELAY = 250L
     }
 }

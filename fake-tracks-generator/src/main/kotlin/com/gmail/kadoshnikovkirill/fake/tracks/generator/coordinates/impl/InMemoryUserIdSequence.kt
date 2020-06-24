@@ -1,6 +1,6 @@
-package com.gmail.kadoshnikovkirill.fake.tracks.generator.core.impl
+package com.gmail.kadoshnikovkirill.fake.tracks.generator.coordinates.impl
 
-import com.gmail.kadoshnikovkirill.fake.tracks.generator.core.UserIdSequence
+import com.gmail.kadoshnikovkirill.fake.tracks.generator.coordinates.UserIdSequence
 import org.springframework.stereotype.Component
 import java.util.concurrent.atomic.AtomicLong
 
