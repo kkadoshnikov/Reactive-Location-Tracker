@@ -1,4 +1,4 @@
-package com.gmail.kadoshnikovkirill.mock.tracks.generator
+package com.gmail.kadoshnikovkirill.fake.tracks.generator
 
 import org.springframework.boot.SpringApplication
 import org.springframework.boot.autoconfigure.SpringBootApplication

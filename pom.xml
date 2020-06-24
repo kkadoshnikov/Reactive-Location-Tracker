@@ -24,7 +24,7 @@
 
     <modules>
         <module>location-tracker-api</module>
-        <module>mock-tracks-generator</module>
+        <module>fake-tracks-generator</module>
         <module>reactive-metrics-starter</module>
     </modules>
 
