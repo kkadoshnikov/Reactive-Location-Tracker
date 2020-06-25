@@ -3,19 +3,16 @@ package com.gmail.kadoshnikovkirill.locationtracker
 import com.gmail.kadoshnikovkirill.locationtracker.domain.Track
 import com.gmail.kadoshnikovkirill.locationtracker.domain.TrackKey
 import com.gmail.kadoshnikovkirill.locationtracker.repository.TracksRepository
-import org.junit.Before
-import org.junit.Test
-import org.junit.runner.RunWith
+import org.junit.jupiter.api.BeforeEach
+import org.junit.jupiter.api.Test
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.boot.test.context.SpringBootTest
-import org.springframework.test.context.junit4.SpringRunner
 import reactor.core.publisher.Flux
 import reactor.core.publisher.Mono
 import reactor.test.StepVerifier
 import java.time.LocalDateTime
 import java.time.temporal.ChronoUnit
 
-@RunWith(SpringRunner::class)
 @SpringBootTest
 class TracksRepositoryTest {
     @Autowired
@@ -23,7 +20,7 @@ class TracksRepositoryTest {
     private val now = LocalDateTime.now()
     private val hr = now.truncatedTo(ChronoUnit.HOURS)
 
-    @Before
+    @BeforeEach
     fun setUp() {
         val deleteAndInsert: Flux<Track> = repository.deleteAll()
                 .thenMany(repository.saveAll(Flux.just(
@@ -55,11 +52,11 @@ class TracksRepositoryTest {
                 .thenMany(repository
                         .saveAll(Flux.just(
                                 Track(
-                                        key = TrackKey(hr, 1L, hr),
+                                        key = TrackKey(hr, 1L, hr.plusMinutes(32)),
                                         lat = 10.2f,
                                         lon = 10.1f),
                                 Track(
-                                        key = TrackKey(hr, 1L, hr),
+                                        key = TrackKey(hr, 1L, hr.plusMinutes(21)),
                                         lat = 11.9f,
                                         lon = 12.5f))))
                 .last()
