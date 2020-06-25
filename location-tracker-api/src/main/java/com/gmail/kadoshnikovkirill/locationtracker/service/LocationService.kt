@@ -2,16 +2,15 @@ package com.gmail.kadoshnikovkirill.locationtracker.service
 
 import com.gmail.kadoshnikovkirill.locationtracker.dto.LocationDto
 import com.gmail.kadoshnikovkirill.locationtracker.provider.LocationProvider
-import com.gmail.kadoshnikovkirill.locationtracker.repository.cache.RedisLocationCache
+import com.gmail.kadoshnikovkirill.locationtracker.repository.cache.LocationCache
 import com.gmail.kadoshnikovkirill.reactive.metrics.MeteredMono
 import org.springframework.stereotype.Service
 import reactor.core.publisher.Mono
 import kotlin.math.roundToInt
 
-// https://tech.yandex.com/maps/geocoder/doc/desc/concepts/input_params-docpage/
 @Service
 class LocationService(
-        private val locationCache: RedisLocationCache,
+        private val locationCache: LocationCache,
         private val locationProvider: LocationProvider
 ) {
 
@@ -22,7 +21,7 @@ class LocationService(
         return locationCache[normalizedLat, normalizedLon]
                 .switchIfEmpty(locationProvider
                         .getByCoordinates(normalizedLat, normalizedLon)
-                        .doOnNext { locationDto: LocationDto -> locationCache.put(normalizedLat, normalizedLon, locationDto) })
+                        .doOnNext { locationCache[normalizedLat, normalizedLon] = it })
     }
 
     private fun normalize(number: Float): Float {

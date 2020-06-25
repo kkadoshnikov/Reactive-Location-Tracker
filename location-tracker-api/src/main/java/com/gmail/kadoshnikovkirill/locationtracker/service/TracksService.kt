@@ -17,33 +17,34 @@ class TracksService(
         @Value("\${cassandraTimeout}")
         private val cassandraTimeout: Int
 ) {
+    private val log = LoggerFactory.getLogger(javaClass)
     private val empty = LocationDto()
 
     fun track(coordinates: Track): Mono<Track> {
         return locationService
                 .getLocationByCoordinates(coordinates.lat, coordinates.lon)
-                .doOnError { e: Throwable? -> LOG.warn("Getting location by coordinates is failed. Coordinates: {}.", coordinates, e) }
+                .doOnError { log.warn("Getting location by coordinates is failed. Coordinates: $coordinates.", it) }
                 .onErrorReturn(empty)
-                .flatMap { dto: LocationDto ->
-                    val track = coordinates.copy(
-                            countryCode = dto.countryCode,
-                            postalCode = dto.postalCode,
-                            country = dto.country,
-                            region = dto.region,
-                            city = dto.city,
-                            street = dto.street,
-                            house = dto.house)
-                    repository.save(track)
-                            .timeout(Duration.ofMillis(cassandraTimeout.toLong()))
-                            .doOnError { e: Throwable? -> LOG.warn("Saving track in cassandra is failed. Track: {}.", track, e) }
-                }
+                .map { buildTrack(coordinates, it) }
+                .flatMap(::saveTrack)
     }
 
     fun findByUserIdAndPeriod(userId: Long, periodInHours: Int): Flux<Track> {
         return repository.findByKeyUserIdAndPeriod(userId, periodInHours)
     }
 
-    companion object {
-        private val LOG = LoggerFactory.getLogger(TracksService::class.java)
+    private fun buildTrack(coordinates: Track, dto: LocationDto) = coordinates.copy(
+            countryCode = dto.countryCode,
+            postalCode = dto.postalCode,
+            country = dto.country,
+            region = dto.region,
+            city = dto.city,
+            street = dto.street,
+            house = dto.house)
+
+    private fun saveTrack(track: Track): Mono<Track> {
+        return repository.save(track)
+                .timeout(Duration.ofMillis(cassandraTimeout.toLong()))
+                .doOnError { log.warn("Saving track in cassandra is failed. Track: $track.", it) }
     }
 }
