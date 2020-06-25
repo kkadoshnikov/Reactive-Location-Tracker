@@ -9,12 +9,13 @@ import org.springframework.stereotype.Component
 import reactor.core.publisher.Mono
 
 @Component
-class RedisLocationCache(connectionFactory: ReactiveRedisConnectionFactory) : ReactiveRedisTemplate<String, LocationDto>(connectionFactory, context()), LocationCache {
+class RedisLocationCache(connectionFactory: ReactiveRedisConnectionFactory)
+    : ReactiveRedisTemplate<String, LocationDto>(connectionFactory, context()), LocationCache {
     override fun get(lat: Float, lon: Float): Mono<LocationDto> {
         return this.opsForHash<String, LocationDto>()["location", hashKey(lat, lon)]
     }
 
-    override fun put(lat: Float, lon: Float, dto: LocationDto) {
+    override fun set(lat: Float, lon: Float, dto: LocationDto) {
         this.opsForHash<Any, Any>().put("location", hashKey(lat, lon), dto).subscribe()
     }
 

@@ -5,37 +5,48 @@ import com.fasterxml.jackson.databind.DeserializationContext
 import com.fasterxml.jackson.databind.JsonNode
 import com.fasterxml.jackson.databind.deser.std.StdDeserializer
 import io.micrometer.core.instrument.Metrics
-import io.micrometer.core.instrument.Timer
+import java.util.function.Supplier
 
-class LocationDeserializer @JvmOverloads constructor(vc: Class<*>? = LocationDto::class.java) : StdDeserializer<LocationDto>(vc) {
+class LocationDeserializer(vc: Class<*>? = LocationDto::class.java) : StdDeserializer<LocationDto>(vc) {
     private val timer = Metrics.timer("location.deserialization")
 
     override fun deserialize(jsonParser: JsonParser, deserializationContext: DeserializationContext): LocationDto {
-        val sample = Timer.start()
-        val jsonNode = jsonParser.codec.readTree<JsonNode>(jsonParser)
-        val address = jsonNode["response"]["GeoObjectCollection"]["featureMember"]
-                .elements().next()["GeoObject"]["metaDataProperty"]["GeocoderMetaData"]["Address"]
-        val locationDto = LocationDto()
-        if (address.has("postal_code")) {
-            locationDto.postalCode = address["postal_code"].asInt()
-        }
-        if (address.has("country_code")) {
-            locationDto.countryCode = address["country_code"].asText()
-        }
-        address["Components"].iterator()
-                .forEachRemaining { component: JsonNode ->
-                    val kind = component["kind"].asText()
-                    when (kind) {
-                        "country" -> locationDto.country = component["name"].asText()
-                        "province" -> locationDto.region = component["name"].asText()
-                        "locality" -> locationDto.city = component["name"].asText()
-                        "street" -> locationDto.street = component["name"].asText()
-                        "house" -> locationDto.house = component["name"].asText()
-                        else -> {
-                        }
-                    }
-                }
-        sample.stop(timer)
-        return locationDto
+        return timer.record(Supplier {
+            val jsonNode = jsonParser.codec.readTree<JsonNode>(jsonParser)
+            val address = getAddressNode(jsonNode)
+            parseLocation(address)
+        })
     }
+
+    private fun getAddressNode(jsonNode: JsonNode) =
+            jsonNode.get("response")
+                    ?.get("GeoObjectCollection")
+                    ?.get("featureMember")
+                    ?.elements()
+                    ?.next()
+                    ?.get("GeoObject")
+                    ?.get("metaDataProperty")
+                    ?.get("GeocoderMetaData")
+                    ?.get("Address")
+                    ?: error("Invalid location format. Input: $jsonNode")
+
+    private fun parseLocation(addressNode: JsonNode) = LocationDto().apply {
+        postalCode = addressNode.getInt("postal_code")
+        countryCode = addressNode.getText("country_code")
+        addressNode["Components"].forEach {
+            when (it["kind"].asText()) {
+                "country" -> country = it.getText("name")
+                "province" -> region = it.getText("name")
+                "locality" -> city = it.getText("name")
+                "street" -> street = it.getText("name")
+                "house" -> house = it.getText("name")
+                else -> {
+                }
+            }
+        }
+    }
+
+    private fun JsonNode.getInt(fieldName: String) = this.get(fieldName)?.asInt()
+
+    private fun JsonNode.getText(fieldName: String) = this.get(fieldName)?.asText()
 }

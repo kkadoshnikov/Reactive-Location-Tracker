@@ -1,34 +1,35 @@
 package com.gmail.kadoshnikovkirill.locationtracker.controller
 
 import com.gmail.kadoshnikovkirill.locationtracker.domain.Track
-import com.gmail.kadoshnikovkirill.locationtracker.domain.TrackKey
-import com.gmail.kadoshnikovkirill.locationtracker.dto.TrackDto
+import com.gmail.kadoshnikovkirill.locationtracker.dto.TrackDTO
 import com.gmail.kadoshnikovkirill.locationtracker.dto.UserCoordinatesDto
+import com.gmail.kadoshnikovkirill.locationtracker.mapper.EntityDTOMapper
 import com.gmail.kadoshnikovkirill.locationtracker.service.TracksService
-import io.micrometer.core.annotation.Timed
 import io.micrometer.core.instrument.Metrics
-import io.micrometer.core.instrument.Timer
+import org.springframework.http.HttpEntity
 import org.springframework.http.HttpStatus
 import org.springframework.http.MediaType
+import org.springframework.http.ResponseEntity
 import org.springframework.web.bind.annotation.*
 import reactor.core.publisher.Flux
 import reactor.core.publisher.Mono
-import java.time.temporal.ChronoUnit
 
 @RestController
 @RequestMapping("/tracks")
-class TracksController(private val tracksService: TracksService) {
+class TracksController(
+        private val tracksService: TracksService,
+        private val userCoordinatesDTOMapper: EntityDTOMapper<Track, UserCoordinatesDto>,
+        private val trackDTOMapper: EntityDTOMapper<Track, TrackDTO>
+) {
     private val timer = Metrics.timer("track")
 
     @PostMapping
     @ResponseStatus(HttpStatus.CREATED)
-    @ResponseBody
-    @Timed("endpoints.track")
-    fun track(@RequestBody dto: UserCoordinatesDto) {
-        val sample = Timer.start()
-        tracksService.track(dto.toEntity())
+    fun track(@RequestBody dto: UserCoordinatesDto): HttpEntity<*> {
+        val track = userCoordinatesDTOMapper.toEntity(dto)
+        tracksService.track(track)
                 .log()
-                .subscribe { sample.stop(timer) }
+        return ResponseEntity.EMPTY
     }
 
     @PostMapping(value = ["stream"], consumes = [MediaType.APPLICATION_STREAM_JSON_VALUE])
@@ -36,8 +37,8 @@ class TracksController(private val tracksService: TracksService) {
     @ResponseBody
     fun stream(@RequestBody dtoFlux: Flux<UserCoordinatesDto>): Mono<Void> {
         return dtoFlux
-                .map { it.toEntity() }
-                .flatMap { tracksService.track(it) }
+                .map(userCoordinatesDTOMapper::toEntity)
+                .flatMap(tracksService::track)
                 .log()
                 .then()
     }
@@ -46,30 +47,8 @@ class TracksController(private val tracksService: TracksService) {
     @ResponseBody
     fun findAll(
             @RequestParam("userId") userId: Long,
-            @RequestParam(value = "period", defaultValue = "24") hours: Int): Flux<TrackDto> {
-        return tracksService.findByUserIdAndPeriod(userId, hours).map { it.toDto() }
+            @RequestParam(value = "period", defaultValue = "24") hours: Int): Flux<TrackDTO> {
+        return tracksService.findByUserIdAndPeriod(userId, hours)
+                .map(trackDTOMapper::toDTO)
     }
-
-    private fun UserCoordinatesDto.toEntity() = Track(
-            key = TrackKey(
-                    hr = timestamp.truncatedTo(ChronoUnit.HOURS),
-                    userId = userId,
-                    ts = timestamp),
-            lat = lat,
-            lon = lon
-    )
-
-    private fun Track.toDto() = TrackDto(
-        userId = key.userId,
-        lat = lat,
-        lon = lon,
-        timestamp = key.ts,
-        countryCode = countryCode,
-        postalCode = postalCode,
-        country = country,
-        region = region,
-        city = city,
-        street = street,
-        house = house
-    )
 }

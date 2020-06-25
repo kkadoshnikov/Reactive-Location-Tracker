@@ -5,5 +5,5 @@ import reactor.core.publisher.Mono
 
 interface LocationCache {
     operator fun get(lat: Float, lon: Float): Mono<LocationDto>
-    fun put(lat: Float, lon: Float, dto: LocationDto)
+    operator fun set(lat: Float, lon: Float, dto: LocationDto)
 }

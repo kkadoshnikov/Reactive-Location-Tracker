@@ -2,7 +2,7 @@ package com.gmail.kadoshnikovkirill.locationtracker.dto
 
 import java.time.LocalDateTime
 
-data class TrackDto(
+data class TrackDTO(
     val userId: Long,
     val lat: Float,
     val lon: Float,
