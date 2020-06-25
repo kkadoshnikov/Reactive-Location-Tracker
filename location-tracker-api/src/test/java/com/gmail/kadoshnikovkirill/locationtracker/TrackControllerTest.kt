@@ -8,7 +8,6 @@ import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.boot.test.context.SpringBootTest
 import org.springframework.http.MediaType
 import org.springframework.test.web.reactive.server.WebTestClient
-import org.springframework.web.util.UriBuilder
 import reactor.core.publisher.Mono
 import java.time.LocalDateTime
 
@@ -35,10 +34,10 @@ class TrackControllerTest {
     @Test
     fun testGetAllLocations() {
         webTestClient.get()
-                .uri { uriBuilder: UriBuilder ->
-                    uriBuilder.path("/tracks")
-                            .queryParam("userId", 2)
-                            .build()
+                .uri { it
+                        .path("/tracks")
+                        .queryParam("userId", 2)
+                        .build()
                 }
                 .accept(MediaType.TEXT_EVENT_STREAM)
                 .exchange()
